@@ -1,0 +1,21 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+  - name: Install git
+    apt:
+      name: git
+      state: present
+      update_cache: yes
+
+  - name: Install tree
+    apt:
+      name: tree
+      state: present
+      update_cache: yes
+
+  - name: Install apache
+    apt:
+      name: apache2
+      state: present
+      update_cache: yes
