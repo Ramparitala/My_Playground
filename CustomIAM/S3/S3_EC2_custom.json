@@ -1,0 +1,28 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "arn:aws:s3:::testing-s3-1"
+        },
+        {
+            "Effect": "Deny",
+            "Action": "s3:DeleteBucket",
+            "Resource": "arn:aws:s3:::testing-s3-1"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "arn:aws:ec2:us-east-1:850457132431:instance/i-000de97434d2b9010"
+        },
+        {
+            "Effect": "Deny",
+            "Action": [
+                "ec2:RunInstancess",
+                "ec2:TerminateInstances"
+            ],
+            "Resource": "arn:aws:ec2:us-east-1:850457132431:instance/i-000de97434d2b9010"
+        }
+    ]
+}
