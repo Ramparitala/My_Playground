@@ -1,0 +1,228 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "ComplexAWS Network",
+    "Parameters": { 
+        "VPCcidrblock": {
+            "Description": "CIDR block for VPC ",
+            "Type": "String",
+            "Default": "10.10.0.0/16"
+        },
+        "subnet1cidr": {
+            "Description": "CIDR for subnet1",
+            "Type": "String",
+            "Default": "10.10.0.0/24"
+        },
+        "subnet2cidr": {
+            "Description": "CIDR for subnet2",
+            "Type": "String",
+            "Default": "10.10.1.0/24"
+        },
+        "subnet3cidr": {
+            "Description": "CIDR for subnet3",
+            "Type": "String",
+            "Default": "10.10.2.0/24"
+        },    
+        "subnet4cidr": {
+            "Description": "CIDR for subnet4",
+            "Type": "String",
+            "Default": "10.10.3.0/24"
+        },
+        "subnet1az": {
+            "Description": "AZ of subnet1",
+            "Type":"AWS::EC2::AvailabilityZone::Name"
+        },
+        "subnet2az": {
+            "Description": "AZ of subnet2",
+            "Type":"AWS::EC2::AvailabilityZone::Name"
+        },
+        "subnet3az": {
+            "Description": "AZ of subnet3",
+            "Type":"AWS::EC2::AvailabilityZone::Name"
+        },
+        "subnet4az": {
+            "Description": "AZ of subnet4",
+            "Type":"AWS::EC2::AvailabilityZone::Name"
+        },
+        "Keypair": {
+            "Description": "Select the KeyValuepair",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        }
+    },
+    "Mappings":{
+      "imagemap" : {
+        "us-east-1" : {"image" : "ami-00068cd7555f543d5"},
+        "us-east-2" : {"image" : "ami-0dacb0c129b49f529"},
+        "ap-south-1" : {"image" : "ami-0a74bfeb190bd404f"}
+      }
+    }, 
+    "Resources" : {
+        "Complex": {
+          "Type": "AWS::EC2::VPC",
+          "Properties": {
+            "CidrBlock": { "Ref": "VPCcidrblock" } 
+          }
+        },
+        "Web": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": { "Ref": "subnet1az" }, 
+            "VpcId": { "Ref": "Complex" },
+            "CidrBlock": { "Ref": "subnet1cidr" }  
+          }
+        },  
+        "App": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": { "Ref": "subnet2az" },
+            "VpcId": { "Ref": "Complex" },
+            "CidrBlock": { "Ref": "subnet2cidr" }
+          }
+        },
+        "Data": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": { "Ref": "subnet3az" },
+            "VpcId": { "Ref": "Complex" },
+            "CidrBlock": { "Ref": "subnet3cidr" }
+          }
+        },
+        "Management": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": { "Ref": "subnet4az" },
+            "VpcId": { "Ref": "Complex" },
+            "CidrBlock": { "Ref": "subnet4cidr" }
+          }
+        },
+        "Myfirstsg" : {
+          "Type" : "AWS::EC2::SecurityGroup",
+          "Properties" : {
+            "GroupName" : "Allow SSH",
+            "GroupDescription" : "This is for Allow SSH connection",
+            "VpcId" : { "Ref": "Complex" },
+            "SecurityGroupIngress": [
+                {
+                   "IpProtocol": "tcp",
+                   "FromPort": 22,
+                   "ToPort": 22,
+                   "CidrIp": "0.0.0.0/0"
+                },
+                {
+                  "IpProtocol": "tcp",
+                  "FromPort": 80,
+                  "ToPort": 80,
+                  "CidrIp": "0.0.0.0/0"
+               }
+             ] 
+          }
+        },
+        "myWebec2": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "KeyName": { "Ref": "Keypair" },
+                "ImageId": { "Fn::FindInMap": [
+                  "imagemap",
+                  {"Ref": "AWS::Region"},
+                    "image"
+                ]},
+                "InstanceType": "t2.micro",
+                "NetworkInterfaces" : [{
+                  "AssociatePublicIpAddress" : "True",
+                  "SubnetId" : { "Ref" : "Web" },
+                  "DeviceIndex" : "0",
+                  "GroupSet" : [ { "Ref" : "Myfirstsg" } ]
+             }]
+        }
+      },
+      "myApplicationec2": {
+        "Type": "AWS::EC2::Instance",
+        "Properties": {
+          "KeyName": { "Ref": "Keypair" },
+          "ImageId": { "Fn::FindInMap": [
+            "imagemap",
+            {"Ref": "AWS::Region"},
+              "image"
+          ]},
+            "InstanceType": "t2.micro",
+            "NetworkInterfaces" : [{
+              "AssociatePublicIpAddress" : "False",
+              "SubnetId" : { "Ref" : "App" },
+              "DeviceIndex" : "0",
+              "GroupSet" : [ { "Ref" : "Myfirstsg" } ]
+         }]
+    }
+  },
+      "myInternetGateway" : {
+        "Type" : "AWS::EC2::InternetGateway"
+     },
+     "AttachGateway" : {
+      "Type" : "AWS::EC2::VPCGatewayAttachment",
+      "Properties" : {
+         "VpcId" : { "Ref" : "Complex" },
+         "InternetGatewayId" : { "Ref" : "myInternetGateway" }
+       }
+   },
+   "PublicRT" : {
+    "Type" : "AWS::EC2::RouteTable",
+    "Properties" : {
+       "VpcId" : { "Ref" : "Complex" }
+    }
+   },
+   "PrivateRT": {
+     "Type": "AWS::EC2::RouteTable",
+     "Properties": {
+       "VpcId": { "Ref" : "Complex" }
+     }
+   },
+   "igw": {
+     "Type": "AWS::EC2::Route",
+     "Properties": {
+       "RouteTableId": {"Ref":"PublicRT"},
+       "DestinationCidrBlock": "0.0.0.0/0",
+       "GatewayId": {"Ref":"myInternetGateway"}
+     }
+   },
+   "Myassociationsunet1": {
+     "Type": "AWS::EC2::SubnetRouteTableAssociation",
+     "Properties": {
+       "SubnetId": {"Ref":"Web"},
+       "RouteTableId": {"Ref":"PublicRT"}
+     }
+   },
+   "Myassociationsunet2": {
+    "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    "Properties": {
+      "SubnetId": {"Ref":"App"},
+      "RouteTableId": {"Ref":"PrivateRT"}
+    }
+  },      
+  "Myassociationsunet3": {
+    "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    "Properties": {
+      "SubnetId": {"Ref":"Data"},
+      "RouteTableId": {"Ref":"PrivateRT"}
+    }
+  }, 
+  "Myassociationsunet4": {
+    "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    "Properties": {
+      "SubnetId": {"Ref":"Management"},
+      "RouteTableId": {"Ref":"PublicRT"}
+    }
+  }
+  },
+  "Outputs":{
+    "vpcid" : {
+      "Value" : {"Ref":"Complex"}
+    },
+    "SG" : {
+      "Value" : {"Ref":"Myfirstsg"}
+    },
+    "IPaddress" : {
+      "Value" : { "Fn::GetAtt" : [ "myWebec2", "PublicIp" ]}
+    },
+    "IPaddress1" : {
+      "Value" : { "Fn::GetAtt" : [ "myApplicationec2", "PrivateIp" ]}
+   }
+ }
+}
