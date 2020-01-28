@@ -1,0 +1,23 @@
+---
+Windows:
+ DesktopVersions:
+   - windows 7
+   - windows 8.0
+   - windows 8.1
+   - windows 10
+ ServerVersion:
+   - windowsserver 2012
+   - windowsserver 2012 r2
+   - windowsserver 2016
+   - windowsserver
+ Owner: Microsoft
+
+Ubuntu:
+  DesktopVersions:
+   - ubuntu 14.04 
+   - ubuntu 16.04
+   - ubuntu 18.04
+  ServerVersions:
+   - ubuntu 14
+   - ubuntu 16
+   - ubuntu 18
