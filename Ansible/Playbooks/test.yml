@@ -1,0 +1,19 @@
+---
+- hosts: webserver
+  become: yes
+  gather_facts: no
+  tasks:
+  - name: "Create file"
+    file:
+      path: /home/ubuntu/test.txt
+      state: touch
+  - name: "Store Contents"
+    blockinfile:
+      path: /home/ubuntu/test.txt
+      block: |
+              "Hello, how are you?"
+  - name: "Display content"
+    command: cat /home/ubuntu/test.txt
+    register: file_content
+  - debug:
+      msg: "{{ file_content }}"
